@@ -128,13 +128,29 @@ def trigger_random_event():
 def do_action(action_type):
     stats = gs['stats']
     
+    # Special handling for REST (recover energy, no cost)
+    if action_type == "REST":
+        with st.spinner("🧘 正在冥想... 呼... 吸..."):
+            time.sleep(1.5)
+        stats['energy'] += 40
+        stats['sanity'] += 10
+        stats['health'] += 2
+        # Cap stats
+        stats['energy'] = min(stats['energy'], 100)
+        log_event("好好休息了一陣子。體力 +40, 心情 +10, 健康 +2。", "good")
+        return
+
+    # Standard check for other actions
     if stats['energy'] < 20:
         log_event("體力不足！請先休息或結束本月。", "bad")
         return
 
+    # Deduct cost for non-rest actions
     stats['energy'] -= 20
     
-    if action_type == "WORK":
+    elif action_type == "WORK":
+        with st.spinner("💼 正在努力搬磚..."):
+            time.sleep(1.0)
         income = 3000 + (stats['knowledge'] * 50)
         stats['wealth'] += income
         stats['sanity'] -= 5
@@ -142,19 +158,18 @@ def do_action(action_type):
         log_event(f"努力工作。獲得 ${income}。心情 -5, 健康 -2。", "gain")
         
     elif action_type == "STUDY":
+        with st.spinner("📚 正在苦讀..."):
+            time.sleep(1.0)
         stats['knowledge'] += 5
         stats['sanity'] -= 2
         log_event("鑽研新知識。智力 +5, 心情 -2。", "info")
         
-    elif action_type == "REST":
-        stats['sanity'] += 15
-        stats['health'] += 5
-        log_event("好好休息了一陣子。心情 +15, 健康 +5。", "good")
-        
     elif action_type == "GYM":
+        with st.spinner("🏋️‍♀️ 正在舉重..."):
+            time.sleep(1.0)
         stats['health'] += 10
         stats['sanity'] += 5
-        stats['energy'] -= 10 # Extra cost
+        stats['energy'] -= 10 # Extra cost (Total -30)
         log_event("去健身房揮灑汗水。健康 +10, 心情 +5。", "good")
 
 # -----------------------------------------------------------------------------
@@ -167,13 +182,13 @@ with st.sidebar:
     
     # Meters
     st.write("❤️ 健康 (Health)")
-    st.progress(gs['stats']['health'] / 100)
+    st.progress(max(0.0, min(1.0, gs['stats']['health'] / 100)))
     
     st.write("😊 心情 (Sanity)")
-    st.progress(gs['stats']['sanity'] / 100)
+    st.progress(max(0.0, min(1.0, gs['stats']['sanity'] / 100)))
     
     st.write("⚡ 體力 (Energy)")
-    st.progress(gs['stats']['energy'] / 100)
+    st.progress(max(0.0, min(1.0, gs['stats']['energy'] / 100)))
     
     st.divider()
     
@@ -223,6 +238,8 @@ if gs['stats']['energy'] < 20:
     st.warning("⚠️ 體力快沒了！請結束本月以恢復體力。")
     
 if st.button("🌙 結束本月 (下一回合)", type="primary"):
+    with st.spinner("🌙 時光飛逝... 一個月過去了..."):
+        time.sleep(1.2)
     advance_turn()
     st.rerun()
 
