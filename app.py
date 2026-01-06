@@ -148,7 +148,7 @@ def do_action(action_type):
     # Deduct cost for non-rest actions
     stats['energy'] -= 20
     
-    elif action_type == "WORK":
+    if action_type == "WORK":
         with st.spinner("💼 正在努力搬磚..."):
             time.sleep(1.0)
         income = 3000 + (stats['knowledge'] * 50)
