@@ -18,23 +18,59 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
+    /* Global Background & Font */
+    .stApp {
+        background-color: #0e1117;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    
+    /* Cyberpunk Stat Card */
     .stat-card {
-        background-color: #262730;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #4e4f57;
+        background: rgba(17, 25, 40, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        border-radius: 12px;
+        padding: 20px;
         text-align: center;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
     }
     .stat-value {
-        font-size: 24px;
+        font-size: 32px;
         font-weight: bold;
-        color: #ffffff;
+        color: #00ff41; /* Neo Green */
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
     }
     .stat-label {
         font-size: 14px;
-        color: #a0a0a0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #b3b3b3;
     }
-    /* Button custom styling could go here */
+    
+    /* Progress Bar Styling */
+    .stProgress > div > div > div > div {
+        background-image: linear-gradient(to right, #00c6ff, #0072ff);
+    }
+    
+    /* Custom divider */
+    hr {
+        border-color: #333;
+    }
+    
+    /* Button Hover Glow */
+    div.stButton > button {
+        border: 1px solid #333;
+        background-color: #1a1a1a;
+        color: #00ff41;
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        border-color: #00ff41;
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        color: #ffffff;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -114,63 +150,85 @@ def trigger_random_event():
         loss = random.randint(1000, 5000)
         gs['stats']['wealth'] -= loss
         gs['stats']['sanity'] -= 10
-        log_event(f"隨機事件：車子拋錨了！噴了 ${loss} 修車費。", "bad")
+        msg = f"⚠️ 系統警告：伺服器遭受攻擊！緊急修復花費 ${loss}。"
+        log_event(msg, "bad")
+        st.toast(msg, icon="🔥")
     elif dice == 20:
         gain = random.randint(2000, 10000)
         gs['stats']['wealth'] += gain
         gs['stats']['sanity'] += 10
-        log_event(f"隨機事件：中發票了！獲得 ${gain}。", "good")
+        msg = f"💎 幸運事件：加密貨幣投資暴漲！獲得 ${gain}。"
+        log_event(msg, "good")
+        st.toast(msg, icon="🚀")
     elif dice == 10:
         gs['stats']['health'] -= 10
-        log_event("隨機事件：感冒了... 健康 -10。", "bad")
+        msg = "⚠️ 系統警告：生物特徵異常。疑似感染流感病毒。"
+        log_event(msg, "bad")
+        st.toast(msg, icon="🦠")
 
 # Actions
 def do_action(action_type):
     stats = gs['stats']
     
-    # Special handling for REST (recover energy, no cost)
+    # Debug info
+    st.write(f"DEBUG: Processing action '{action_type}'")
+
     if action_type == "REST":
-        with st.spinner("🧘 正在冥想... 呼... 吸..."):
+        with st.spinner("🧘 正在冥想... 連接宇宙意識..."):
             time.sleep(1.5)
         stats['energy'] += 40
         stats['sanity'] += 10
         stats['health'] += 2
         # Cap stats
         stats['energy'] = min(stats['energy'], 100)
-        log_event("好好休息了一陣子。體力 +40, 心情 +10, 健康 +2。", "good")
+        
+        msg = "系統充能完畢。體力與理智已恢復。"
+        log_event(msg, "good")
+        st.toast(msg, icon="🧘")
         return
 
-    # Standard check for other actions
+    # ----------------------------------------------------------------
+    # Logic for non-REST actions
+    # ----------------------------------------------------------------
+    
+    # 1. Check Energy
     if stats['energy'] < 20:
         log_event("體力不足！請先休息或結束本月。", "bad")
         return
 
-    # Deduct cost for non-rest actions
+    # 2. Deduct Energy
     stats['energy'] -= 20
     
+    # 3. Apply Effect
     if action_type == "WORK":
-        with st.spinner("💼 正在努力搬磚..."):
+        with st.spinner("💼 正在執行高頻交易算法..."):
             time.sleep(1.0)
         income = 3000 + (stats['knowledge'] * 50)
         stats['wealth'] += income
         stats['sanity'] -= 5
         stats['health'] -= 2
-        log_event(f"努力工作。獲得 ${income}。心情 -5, 健康 -2。", "gain")
+        msg = f"專案交付成功。入帳 ${income}。"
+        log_event(msg, "gain")
+        st.toast(msg, icon="💸")
         
     elif action_type == "STUDY":
-        with st.spinner("📚 正在苦讀..."):
+        with st.spinner("📚 正在下載神經網絡模型..."):
             time.sleep(1.0)
         stats['knowledge'] += 5
         stats['sanity'] -= 2
-        log_event("鑽研新知識。智力 +5, 心情 -2。", "info")
+        msg = "腦容量升級。智力 +5。"
+        log_event(msg, "info")
+        st.toast(msg, icon="🧠")
         
     elif action_type == "GYM":
-        with st.spinner("🏋️‍♀️ 正在舉重..."):
+        with st.spinner("🏋️‍♀️ 正在強化外骨骼機甲..."):
             time.sleep(1.0)
         stats['health'] += 10
         stats['sanity'] += 5
         stats['energy'] -= 10 # Extra cost (Total -30)
-        log_event("去健身房揮灑汗水。健康 +10, 心情 +5。", "good")
+        msg = "機體維護完成。健康 +10, 心情 +5。"
+        log_event(msg, "good")
+        st.toast(msg, icon="🦾")
 
 # -----------------------------------------------------------------------------
 # 5. UI Layout
@@ -178,28 +236,40 @@ def do_action(action_type):
 
 # Sidebar - Stats Display
 with st.sidebar:
-    st.title(f"🗓️ 年齡: {gs['age']} (第 {gs['month']} 月)")
+    st.markdown(f"## 🗓️ Cycle: {gs['age']} // M-{gs['month']}")
     
+    # Custom Function for Dynamic Status
+    def get_status_icon(value, type="normal"):
+        if value > 80: return "🟢" if type=="normal" else "⚡"
+        if value > 40: return "🟡" if type=="normal" else "🔋"
+        return "🔴" if type=="normal" else "🪫"
+
     # Meters
-    st.write("❤️ 健康 (Health)")
-    st.progress(max(0.0, min(1.0, gs['stats']['health'] / 100)))
+    st.markdown("### 🧬 生理監測 (Biometrics)")
     
-    st.write("😊 心情 (Sanity)")
-    st.progress(max(0.0, min(1.0, gs['stats']['sanity'] / 100)))
+    h_val = gs['stats']['health']
+    st.write(f"Health: {h_val}% {get_status_icon(h_val)}")
+    st.progress(max(0.0, min(1.0, h_val / 100)))
     
-    st.write("⚡ 體力 (Energy)")
-    st.progress(max(0.0, min(1.0, gs['stats']['energy'] / 100)))
+    s_val = gs['stats']['sanity']
+    st.write(f"Sanity: {s_val}% {get_status_icon(s_val)}")
+    st.progress(max(0.0, min(1.0, s_val / 100)))
+    
+    e_val = gs['stats']['energy']
+    st.write(f"Energy: {e_val}% {get_status_icon(e_val, 'energy')}")
+    st.progress(max(0.0, min(1.0, e_val / 100)))
     
     st.divider()
     
     # Counters
+    st.markdown("### 💾 資源存量 (Assets)")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("財富", f"${gs['stats']['wealth']:,.0f}")
+        st.metric("Credits (財富)", f"${gs['stats']['wealth']:,.0f}", delta="USD")
     with col2:
-        st.metric("智力", gs['stats']['knowledge'])
+        st.metric("RAM (智力)", gs['stats']['knowledge'], delta="INT")
         
-    if st.button("🔄 重置遊戲"):
+    if st.button("🔄 系統重置 (Reboot)"):
         st.session_state.clear()
         st.rerun()
 
@@ -213,23 +283,22 @@ if gs['game_over']:
 
 # Action Panel
 st.subheader("選擇你的行動")
-col_a, col_b, col_c, col_d = st.columns(4)
+# Action Panel
+st.subheader("選擇你的行動")
+# Debug: Show button states
+st.caption(f"Button States: Work={st.session_state.get('btn_work')} | Study={st.session_state.get('btn_study')} | Gym={st.session_state.get('btn_gym')} | Rest={st.session_state.get('btn_rest')}")
 
-with col_a:
-    if st.button("💼 工作 (Work)", use_container_width=True, help="賺錢，但會累"):
-        do_action("WORK")
+if st.button("💼 工作 (Work)", use_container_width=True, key="btn_work", help="賺錢，但會累"):
+    do_action("WORK")
 
-with col_b:
-    if st.button("📚 讀書 (Study)", use_container_width=True, help="增加智力"):
-        do_action("STUDY")
+if st.button("📚 讀書 (Study)", use_container_width=True, key="btn_study", help="增加智力"):
+    do_action("STUDY")
 
-with col_c:
-    if st.button("🏋️‍♀️ 健身 (Gym)", use_container_width=True, help="增加健康"):
-        do_action("GYM")
+if st.button("🏋️‍♀️ 健身 (Gym)", use_container_width=True, key="btn_gym", help="增加健康"):
+    do_action("GYM")
 
-with col_d:
-    if st.button("🧘 休息 (Rest)", use_container_width=True, help="恢復心情與體力"):
-        do_action("REST")
+if st.button("🧘 休息 (Rest)", use_container_width=True, key="btn_rest", help="恢復心情與體力"):
+    do_action("REST")
 
 st.divider()
 
